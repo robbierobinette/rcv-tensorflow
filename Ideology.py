@@ -1,16 +1,15 @@
 from typing import List
 import math
 import numpy as np
-import numpy.typing as npt
 
 
 class IdeologyBase:
-    def __init__(self, ideology_vec: npt.ArrayLike):
-        self.vec = ideology_vec
+    def __init__(self, ideology_vec: np.ndarray):
+        self.vec: np.ndarray = ideology_vec
 
 
 class Ideology(IdeologyBase):
-    def __init__(self, ideology_vec: npt.ArrayLike):
+    def __init__(self, ideology_vec: np.ndarray):
         super().__init__(ideology_vec)
 
     def length(self) -> float:

@@ -1,7 +1,6 @@
 from typing import List, Set, Tuple
 
 import numpy as np
-import numpy.typing as npt
 
 from Candidate import Candidate
 from Election import Election, BallotIter
@@ -31,7 +30,7 @@ class HeadToHeadElection(Election):
         oc = self.minimax(self.candidates)
         return HeadToHeadResult(oc, self.result_matrix)
 
-    def compute_matrix(self) -> npt.ArrayLike:
+    def compute_matrix(self) -> np.array:
         n_candidates = len(self.candidates)
         results = np.zeros([n_candidates, n_candidates])
         for b in self.ballots:

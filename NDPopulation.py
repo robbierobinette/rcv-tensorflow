@@ -3,11 +3,10 @@ from Voter import Voter
 from Ideology import Ideology
 from Party import Party
 import numpy as np
-import numpy.typing as npt
 
 
 class NDPopulation(Population):
-    def __init__(self, location: npt.ArrayLike, scale: npt.ArrayLike, party: Party):
+    def __init__(self, location: np.array, scale: np.array, party: Party):
         super().__init__(party)
         self.location = location
         self.scale = scale
