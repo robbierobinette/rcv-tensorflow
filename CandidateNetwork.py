@@ -6,9 +6,9 @@ from Tensor import Tensor
 
 
 class CandidateNetwork(tf.keras.Model):
-    def __init__(self, ideology_width: int, ideology_dim: int, state_dim: int, width: int):
+    def __init__(self, ideology_bins: int, ideology_dim: int, state_dim: int, width: int):
         super().__init__()
-        self.ideology_width = ideology_width
+        self.ideology_bins = ideology_bins
         self.ideology_dim = ideology_dim
         self.state_dim = state_dim
 
@@ -24,12 +24,12 @@ class CandidateNetwork(tf.keras.Model):
         self.decoding_layers.append(tf.keras.layers.Dense(width, activation='relu'))
         self.decoding_layers.append(tf.keras.layers.Dense(width, activation='relu'))
 
-        self.returns = tf.keras.layers.Dense(ideology_width * ideology_dim)
+        self.returns = tf.keras.layers.Dense(ideology_bins * ideology_dim)
 
     # input is a tensor of shape (batch_size, n_observations (n_candidates), input_dim)
     def call(self, input: Tensor) -> Tensor:
         # runs the encoder portion of the model on a single input
-        if input.shape[2] != 0:
+        if input.shape[1] != 0:
             x = input
             for e in self.encoding_layers:
                 x = e(x)
