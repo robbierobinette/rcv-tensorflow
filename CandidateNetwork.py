@@ -6,18 +6,18 @@ from Tensor import Tensor
 
 
 class CandidateNetwork(tf.keras.Model):
-    def __init__(self, ideology_bins: int, ideology_dim: int, state_dim: int, width: int):
+    def __init__(self, ideology_bins: int, ideology_dim: int, n_latent: int, width: int):
         super().__init__()
         self.ideology_bins = ideology_bins
         self.ideology_dim = ideology_dim
-        self.state_dim = state_dim
+        self.n_latent = n_latent
 
         self.encoding_layers = []
         self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu'))
         self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu'))
         self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu'))
 
-        self.state = tf.keras.layers.Dense(self.state_dim)
+        self.state = tf.keras.layers.Dense(self.n_latent)
 
         self.decoding_layers = []
         self.decoding_layers.append(tf.keras.layers.Dense(width, activation='relu'))
@@ -40,7 +40,7 @@ class CandidateNetwork(tf.keras.Model):
         else:
             # this corresponds to no candidates in the race yet.
             batch_size = input.shape[0]
-            encoded_state = tf.zeros(shape=(batch_size, self.state_dim), dtype=tf.dtypes.float32)
+            encoded_state = tf.zeros(shape=(batch_size, self.n_latent), dtype=tf.dtypes.float32)
 
         # use that composite state to predict the returns for each possible action
         x = encoded_state

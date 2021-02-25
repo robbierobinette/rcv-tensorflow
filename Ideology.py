@@ -12,8 +12,9 @@ class Ideology(IdeologyBase):
     def __init__(self, ideology_vec: np.ndarray):
         super().__init__(ideology_vec)
 
-    def length(self) -> float:
-        return np.sum(np.abs(self.vec))
+    def distance_from_o(self) -> float:
+        dim = self.vec.shape[0]
+        return self.distance(Ideology(np.zeros(shape=(dim,))))
 
     def euclidean_distance(self, rhs: IdeologyBase) -> float:
         deltas = rhs.vec - self.vec

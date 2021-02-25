@@ -13,15 +13,18 @@ from Tensor import Tensor
 
 
 class CandidateModel:
-    def __init__(self, ideology_bins: int, ideology_dim: int, n_hidden: int, batch_size: int,
+    def __init__(self, ideology_bins: int, ideology_dim: int, n_hidden: int, n_latent: int, batch_size: int,
                  learn_rate: float):
         super().__init__()
         self.ideology_bins = ideology_bins
         self.ideology_dim = ideology_dim
         self.n_hidden = n_hidden
+        self.n_latent = n_latent
         self.batch_size = batch_size
         self.learn_rate = learn_rate
-        self.model = CandidateNetwork(ideology_bins=ideology_bins, ideology_dim=ideology_dim, state_dim=64,
+        self.model = CandidateNetwork(ideology_bins=ideology_bins,
+                                      ideology_dim=ideology_dim,
+                                      n_latent=n_latent,
                                       width=n_hidden)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=learn_rate)
         self.global_step = 0
@@ -42,6 +45,7 @@ class CandidateModel:
         for depth in self.memory.depths():
             state, action, reward = self.memory.get_batch(depth, batch_size)
             self.update(state, action, reward)
+        self.global_step += 1
 
     def update(self, input_batch: np.ndarray, actions: np.ndarray, reward: np.ndarray):
         batch_size = input_batch.shape[0]
@@ -61,7 +65,6 @@ class CandidateModel:
         grads = tape.gradient(loss, self.model.variables)
         filtered_grad_vars = [(grad, var) for (grad, var) in zip(grads, self.model.trainable_variables) if grad is not None]
         self.optimizer.apply_gradients(filtered_grad_vars, self.global_step)
-        self.global_step += 1
 
     def convert_ideology_to_input(self, ideology: Ideology) -> Tensor:
         return self.convert_ideology_to_input_onehot(ideology)

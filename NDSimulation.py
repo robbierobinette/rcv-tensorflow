@@ -99,7 +99,7 @@ def main():
 
 def get_plot_column(winners: List[List[ElectionResult]], process_index: int, party: Party) -> List[float]:
     ideologies = [r[process_index].winner().ideology for r in winners if r[process_index].winner().party == party]
-    distances = [i.length() for i in ideologies]
+    distances = [i.distance_from_o() for i in ideologies]
     return distances
 
 
@@ -120,9 +120,9 @@ def run_election(dvr: DistrictVotingRecord,
     candidates = gen_candidates(6, pop)
     candidates.append(Candidate("V", Independents, Ideology(np.random.normal(scale=[1.0, 1.0])), quality=0))
 
-    vv = [v.ideology.length() for v in voters]
+    vv = [v.ideology.distance_from_o() for v in voters]
     all_voters = np.append(all_voters, vv)
-    cc = [c.ideology.length() for c in candidates]
+    cc = [c.ideology.distance_from_o() for c in candidates]
     all_candidates = np.append(all_candidates, cc)
     ballots = [Ballot(v, candidates, default_election_config) for v in voters]
     results = [p.run(ballots, set(candidates)) for p in processes]
