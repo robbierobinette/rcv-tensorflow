@@ -6,12 +6,20 @@ import random
 
 
 class Voter:
-    def __init__(self, ideology: Ideology, party: Party):
+    def __init__(self, ideology: Ideology):
         self.ideology = ideology
+
+    def score(self, candidate: Candidate, config: ElectionConfig):
+        pass
+
+
+class PartisanVoter(Voter):
+    def __init__(self, ideology: Ideology, party: Party):
+        super(PartisanVoter, self).__init__(ideology)
         self.party = party
 
     def score(self, candidate: Candidate, config: ElectionConfig) -> float:
-        score = 200 - self.ideology.distance(candidate.ideology)
+        score = -self.ideology.distance(candidate.ideology)
         score += candidate.quality
 
         if self.party == candidate.party:
@@ -24,4 +32,16 @@ class Voter:
         if candidate.party == Independents:
             score -= config.wasted_vote_factor
 
+        return score
+
+
+# just like a voter but without
+class UnitVoter(Voter):
+    def __init__(self, ideology: Ideology):
+        super(UnitVoter, self).__init__(ideology)
+
+    def score(self, candidate: Candidate, config: ElectionConfig) -> float:
+        score = -self.ideology.distance(candidate.ideology)
+        score += candidate.quality
+        score += random.normalvariate(0, config.uncertainty)
         return score

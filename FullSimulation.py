@@ -51,7 +51,7 @@ def get_plot_column(winners: List[List[ElectionResult]], process_index: int, par
 def gen_candidates(population: PopulationGroup) -> List[Candidate]:
     cc = []
     for i in range(0, 3):
-        v = population.sample_voter()
+        v = population.partisan_sample_voter()
         cc.append(Candidate("%s-%d" % (population.party.short_name, i + 1), population.party, v.ideology, 0))
     return cc
 

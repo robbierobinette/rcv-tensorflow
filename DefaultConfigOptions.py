@@ -1,7 +1,19 @@
 from PopulationGroup import *
 from CombinedPopulation import *
 
-default_election_config = ElectionConfig(
+
+unit_election_config = ElectionConfig(
+    partisanship=0,
+    stddev=1,
+    skew_factor=0,
+    primary_skew=0,
+    party_loyalty=0,
+    independent_bonus=0,
+    wasted_vote_factor=0,
+    uncertainty=.375
+)
+
+dw_nominate_election_config = ElectionConfig(
     partisanship=30,
     stddev=12,
     skew_factor=.5,
@@ -11,7 +23,7 @@ default_election_config = ElectionConfig(
     wasted_vote_factor=10,
     uncertainty=15)
 
-_cc = default_election_config
+_cc = dw_nominate_election_config
 _population_groups = [
     PopulationGroup(Republicans, _cc.partisanship, _cc.stddev, .4, _cc.primary_skew),
     PopulationGroup(Independents, 0, _cc.stddev, .4, 0),

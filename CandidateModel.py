@@ -10,17 +10,24 @@ import datetime as datetime
 from Timings import Timings
 
 from Tensor import Tensor
+import pickle
+
+
+
 
 
 class CandidateModel:
-    def __init__(self, ideology_bins: int, ideology_dim: int, n_hidden: int, n_latent: int, batch_size: int,
+    def __init__(self,
+                 ideology_bins: int,
+                 ideology_dim: int,
+                 n_hidden: int,
+                 n_latent: int,
                  learn_rate: float):
         super().__init__()
         self.ideology_bins = ideology_bins
         self.ideology_dim = ideology_dim
         self.n_hidden = n_hidden
         self.n_latent = n_latent
-        self.batch_size = batch_size
         self.learn_rate = learn_rate
         self.model = CandidateNetwork(ideology_bins=ideology_bins,
                                       ideology_dim=ideology_dim,
@@ -30,12 +37,37 @@ class CandidateModel:
         self.global_step = 0
         self.memory = ActionMemory(100 * 1000, ideology_dim, ideology_dim)
         self.action_width = self.ideology_bins * self.ideology_dim
+        self.ideology_range = 6
+
         # this is the dimension of the input vector for a single opponent.  It can be the same as ideology_dim, or
         # it could be ideology_dim * ideology_bins for a one_hot representation of ideology
         self.input_width = ideology_bins * ideology_dim
 
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         self.log_dir = 'logs/' + current_time + '/train'
+        self.summary_writer = tf.summary.create_file_writer(self.log_dir)
+        self.model_path = ""
+
+    def save_to_file(self, path: str):
+        self.model_path = path + ".model"
+        self.model.save(self.model_path)
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Don't pickle the model
+        del state["model"]
+        del state["memory"]
+        del state["optimizer"]
+        del state["summary_writer"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.memory = ActionMemory(100 * 1000, self.ideology_dim, self.ideology_dim)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learn_rate)
+        self.model = tf.keras.models.load_model(self.model_path)
         self.summary_writer = tf.summary.create_file_writer(self.log_dir)
 
     def ready(self) -> bool:
@@ -63,7 +95,8 @@ class CandidateModel:
             tf.summary.scalar('loss', loss, step=self.global_step)
 
         grads = tape.gradient(loss, self.model.variables)
-        filtered_grad_vars = [(grad, var) for (grad, var) in zip(grads, self.model.trainable_variables) if grad is not None]
+        filtered_grad_vars = [(grad, var) for (grad, var) in zip(grads, self.model.trainable_variables) if
+                              grad is not None]
         self.optimizer.apply_gradients(filtered_grad_vars, self.global_step)
 
     def convert_ideology_to_input(self, ideology: Ideology) -> Tensor:
@@ -73,12 +106,12 @@ class CandidateModel:
         return ideology.vec.astype(dtype=np.float32)
 
     def convert_ideology_to_input_onehot(self, ideology: Ideology) -> Tensor:
-        float_vec = (ideology.vec / 200 + .5) * self.ideology_bins
+        float_vec = (ideology.vec / self.ideology_range + .5) * self.ideology_bins
         one_hot = tf.one_hot(tf.cast(float_vec, tf.dtypes.int32), depth=self.ideology_bins)
         return tf.reshape(one_hot, shape=(self.input_width))
 
     def convert_ideology_to_int(self, ideology: float):
-        return int((ideology + 100) / 200 * self.ideology_bins)
+        return int((ideology + self.ideology_range / 2) / self.ideology_range * self.ideology_bins)
 
     # the action vector is a vector of integers corresponding to the actions
     # taken where each action is a location on the i'th dimension of the
@@ -117,6 +150,6 @@ class CandidateModel:
         ideology_pred = self.model.call(state)
         ideology_hot = tf.reshape(ideology_pred, shape=(self.ideology_dim, self.ideology_bins))
         ideology_indices = tf.cast(tf.argmax(ideology_hot, axis=1), tf.dtypes.float32)
-        ideology_vec = (ideology_indices / self.ideology_bins - .5) * 200.0
+        ideology_vec = (ideology_indices / self.ideology_bins - .5) * self.ideology_range
 
         return ideology_vec.numpy()

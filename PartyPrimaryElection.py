@@ -26,7 +26,7 @@ class PartyPrimaryElection(Election):
         pop = self.combined_pop.pg_dict[party]
         primary_pop = PopulationGroup(pop.party, pop.mean + pop.primary_shift, pop.stddev, pop.weight, 0)
         party_candidates = set(filter(lambda c: c.party == party, self.candidates))
-        party_ballots = [Ballot(primary_pop.sample_voter(), list(party_candidates), self.config) for x in
+        party_ballots = [Ballot(primary_pop.partisan_sample_voter(), list(party_candidates), self.config) for x in
                          range(len(self.ballots))]
         primary = PluralityElection(party_ballots, party_candidates)
         self.primaries[party] = primary

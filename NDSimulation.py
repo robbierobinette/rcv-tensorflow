@@ -2,9 +2,7 @@ import matplotlib.pyplot as plt
 
 from Ballot import Ballot
 from DefaultConfigOptions import *
-from PartyPrimaryElection import PartyPrimaryElection
 from ElectionResult import ElectionResult
-from DistrictData import DistrictVotingRecord, DistrictData
 from InstantRunoffElection import InstantRunoffElection
 from HeadToHeadElection import HeadToHeadElection
 from Population import Population
@@ -35,9 +33,6 @@ def construct_h2h(ballots: List[Ballot], candidates: Set[Candidate]):
 
 
 def main():
-    dd = DistrictData("data-5vPn3.csv")
-    dec = default_election_config
-
     winners: List[List[ElectionResult]] = []
     processes = [
         ElectionConstructor(construct_irv, "Instant Runoff"),
@@ -45,11 +40,10 @@ def main():
     ]
 
     for i in range(1):
-        dvr_list: List[DistrictVotingRecord] = list(dd.dvr.values())
         print("iteration %d" % i)
         c = 0
-        for dvr in dvr_list:
-            winners.append(run_election(dvr, processes, dec))
+        for ii in range(1000):
+            winners.append(run_election(processes))
             c += 1
             print(".", end="")
             if c % 100 == 0:
@@ -106,17 +100,15 @@ def get_plot_column(winners: List[List[ElectionResult]], process_index: int, par
 def gen_candidates(n: int, population: Population) -> List[Candidate]:
     cc = []
     for i in range(n):
-        v = population.sample_voter()
+        v = population.unit_sample_voter()
         cc.append(Candidate("%s-%d" % (population.party.short_name, i + 1), population.party, v.ideology, 0))
     return cc
 
 
-def run_election(dvr: DistrictVotingRecord,
-                 processes: List[ElectionConstructor],
-                 dec: ElectionConfig) -> List[ElectionResult]:
+def run_election(processes: List[ElectionConstructor]) -> List[ElectionResult]:
     global all_voters, all_candidates
-    pop = NDPopulation(np.array([0, 0]), np.array([40, 40]), Independents)
-    voters = pop.generate_voters(1000)
+    pop = NDPopulation(np.array([0, 0]), np.array([40, 40]))
+    voters = pop.generate_unit_voters(1000)
     candidates = gen_candidates(6, pop)
     candidates.append(Candidate("V", Independents, Ideology(np.random.normal(scale=[1.0, 1.0])), quality=0))
 
@@ -124,7 +116,7 @@ def run_election(dvr: DistrictVotingRecord,
     all_voters = np.append(all_voters, vv)
     cc = [c.ideology.distance_from_o() for c in candidates]
     all_candidates = np.append(all_candidates, cc)
-    ballots = [Ballot(v, candidates, default_election_config) for v in voters]
+    ballots = [Ballot(v, candidates, unit_election_config) for v in voters]
     results = [p.run(ballots, set(candidates)) for p in processes]
     return results
 

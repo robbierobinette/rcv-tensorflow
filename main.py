@@ -9,13 +9,13 @@ from typing import List
 
 def main():
     population_groups = [
-        PopulationGroup(Republicans, 30, 30, .4),
-        PopulationGroup(Independents, 0, 30, .2),
-        PopulationGroup(Democrats, -30, 30, .4)
+        PopulationGroup(Republicans, 30, 30, .4, 12),
+        PopulationGroup(Independents, 0, 30, .2, 0),
+        PopulationGroup(Democrats, -30, 30, .4, -12)
     ]
 
     combined_population = CombinedPopulation(population_groups)
-    voters = list(map(lambda i: combined_population.sample_voter(), range(1000)))
+    voters = list(map(lambda i: combined_population.sample_voter(), range(10000)))
 
     iv = filter(lambda v: v.party == Independents, voters)
     ii = list(map(lambda v: v.ideology.vec[0], iv))
@@ -30,7 +30,7 @@ def main():
              stacked=True,
              density=True,
              bins=30,
-             color=["red", "gray", "blue"],
+             color=["blue", "gray", "red"],
              label=["Democrats", "Independents", "Republicans"],
              )
     plt.xlabel('ideology')

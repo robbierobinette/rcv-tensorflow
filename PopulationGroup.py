@@ -12,9 +12,13 @@ class PopulationGroup:
         self.weight = weight
         self.primary_shift = primary_shift
 
-    def sample_voter(self) -> Voter:
+    def partisan_sample_voter(self) -> PartisanVoter:
         i = Ideology(np.random.normal(loc=[self.mean], scale=[self.stddev]))
-        return Voter(i, self.party)
+        return PartisanVoter(i, self.party)
+
+    def unit_voter(self) -> UnitVoter:
+        i = Ideology(np.random.normal(loc=[self.mean], scale=[self.stddev]))
+        return UnitVoter(i)
 
 
 

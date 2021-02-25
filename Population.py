@@ -8,8 +8,14 @@ class Population:
         super().__init__()
         self.party = party
 
-    def sample_voter(self) -> Voter:
+    def partisan_sample_voter(self) -> Voter:
         pass
 
-    def generate_voters(self, n: int) -> List[Voter]:
-        return list(map(lambda i: self.sample_voter(), range(n)))
+    def unit_sample_voter(self) -> Voter:
+        pass
+
+    def generate_partisan_voters(self, n: int) -> List[Voter]:
+        return list(map(lambda i: self.partisan_sample_voter(), range(n)))
+
+    def generate_unit_voters(self, n: int) -> List[Voter]:
+        return list(map(lambda i: self.unit_sample_voter(), range(n)))

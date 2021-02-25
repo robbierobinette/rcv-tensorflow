@@ -32,4 +32,4 @@ class CombinedPopulation(Population):
 
     def sample_voter(self):
         p_group = self.get_weighted_population()
-        return p_group.sample_voter()
+        return p_group.partisan_sample_voter()
