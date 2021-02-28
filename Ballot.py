@@ -14,12 +14,11 @@ class Ballot:
         cs.sort(key=lambda c: c.score, reverse=True)
         self.ordered_candidates = cs
 
-    def active_winner(self, active_candidates: Set[Candidate]) -> Candidate:
-        fc = filter(lambda c: c.candidate in active_candidates, self.ordered_candidates)
-        return next(fc).candidate
-
-    def winner(self) -> Candidate:
-        return self.ordered_candidates[0].candidate
+    def active_choice(self, active_candidates: Set[Candidate]) -> Candidate:
+        for c in self.ordered_candidates:
+            if c.candidate in active_candidates:
+                return c.candidate
+        assert(False, "no candidate in active candidates")
 
     def print(self):
         for cs in self.ordered_candidates:

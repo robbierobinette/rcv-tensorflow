@@ -24,7 +24,7 @@ class PluralityElection(Election):
 
     def compute_results(self) -> List[Candidate]:
         for b in self.ballots:
-            w = b.active_winner(self.active_candidates)
+            w = b.active_choice(self.active_candidates)
             if w not in self.vote_totals:
                 self.vote_totals[w] = 0
             self.vote_totals[w] += 1

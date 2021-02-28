@@ -18,17 +18,20 @@ class InstantRunoffElection(Election):
         return self.compute_result()
 
     def compute_result(self) -> InstantRunoffResult:
-        active_candidates = self.candidates
+        active_candidates = self.candidates.copy()
         rounds = []
         losers = []
         while len(active_candidates) > 1:
-            plurality = PluralityElection(self.ballots, self.candidates)
+            plurality = PluralityElection(self.ballots, active_candidates)
             r = plurality.result()
             rounds.append(r)
-            losers.append(r.ordered_candidates[-1])
-            active_candidates.remove(r.ordered_candidates[-1])
+            loser = r.ordered_candidates[-1]
+            losers.append(loser)
+            active_candidates.remove(loser)
 
-        winners = list(losers.__reversed__())
+        assert(len(active_candidates) == 1)
+        losers += list(active_candidates)
+        winners = list(reversed(losers))
 
         return InstantRunoffResult(winners, rounds)
 

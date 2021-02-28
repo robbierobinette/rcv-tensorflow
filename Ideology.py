@@ -11,6 +11,8 @@ class IdeologyBase:
 class Ideology(IdeologyBase):
     def __init__(self, ideology_vec: np.ndarray):
         super().__init__(ideology_vec)
+        self.dim = ideology_vec.shape[0]
+
 
     def distance_from_o(self) -> float:
         dim = self.vec.shape[0]

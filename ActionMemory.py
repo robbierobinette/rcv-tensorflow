@@ -20,7 +20,7 @@ class ActionMemory:
         return list(self.depth_memory.keys())
 
     def ready(self) -> bool:
-        return self.size > 10000
+        return self.size > 100
 
     def add_sample(self, state: np.ndarray, action: np.ndarray, reward: np.ndarray):
         self.size += 1
