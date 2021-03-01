@@ -35,7 +35,7 @@ class CandidateModel:
                                       width=n_hidden)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=learn_rate)
         self.global_step = 0
-        self.memory = ActionMemory(100 * 1000, ideology_dim, ideology_dim)
+        self.memory = ActionMemory(1024, ideology_dim, ideology_dim)
         self.action_width = self.ideology_bins * self.ideology_dim
         self.ideology_range = 6
 
@@ -86,7 +86,7 @@ class CandidateModel:
         # each row will have 'ideology_dim' hot elements, one in each chunk of 'ideology_bins'
         one_hot = tf.reshape(one_hot, shape=(batch_size, self.action_width))
         with tf.GradientTape() as tape:
-            y = self.model(input_batch)
+            y = self.model(input_batch, training=True)
             rewards = tf.ones(shape=(batch_size, self.action_width)) * reward
             deltas = tf.square(y - rewards) * one_hot
             loss = tf.reduce_sum(deltas)
@@ -147,7 +147,7 @@ class CandidateModel:
 
     def choose_ideology(self, opponents: List[Candidate]) -> Tensor:
         state = self.get_state_from_opponents(opponents)
-        ideology_pred = self.model.call(state)
+        ideology_pred = self.model.call(state, training=True)
         ideology_hot = tf.reshape(ideology_pred, shape=(self.ideology_dim, self.ideology_bins))
         ideology_indices = tf.cast(tf.argmax(ideology_hot, axis=1), tf.dtypes.float32)
         ideology_vec = (ideology_indices / self.ideology_bins - .5) * self.ideology_range

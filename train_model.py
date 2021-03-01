@@ -163,8 +163,8 @@ def plot_results(results: List[ProcessResult]):
         axis.tick_params(axis='y', colors="black")
         axis.set_xlim([0, 2.5])
 
-        iv = [w.ideology.distance_from_o() for w in ir.stats.results]
-        hv = [w.ideology.distance_from_o() for w in hr.stats.results]
+        iv = [w.ideology.distance_from_o() for w in ir.stats.winners]
+        hv = [w.ideology.distance_from_o() for w in hr.stats.winners]
 
         axis.hist([iv, hv], bins=30, label=[ir.process.name, hr.process.name])
         axis.set_title("Dimensionality: %d" % ir.dim, color="black")

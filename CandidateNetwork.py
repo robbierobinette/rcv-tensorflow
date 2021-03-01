@@ -4,7 +4,6 @@ from typing import List
 from Tensor import Tensor
 
 
-
 class CandidateNetwork(tf.keras.Model):
     def __init__(self, ideology_bins: int, ideology_dim: int, n_latent: int, width: int):
         super().__init__()
@@ -24,17 +23,18 @@ class CandidateNetwork(tf.keras.Model):
         self.decoding_layers.append(tf.keras.layers.Dense(width, activation='relu'))
         self.decoding_layers.append(tf.keras.layers.Dense(width, activation='relu'))
 
+        self.dropout = tf.keras.layers.Dropout(.3)
         self.returns = tf.keras.layers.Dense(ideology_bins * ideology_dim)
 
     # input is a tensor of shape (batch_size, n_observations (n_candidates), input_dim)
-    def call(self, input: Tensor) -> Tensor:
+    def call(self, input: Tensor, training: bool = None, mask: bool = None) -> Tensor:
         # runs the encoder portion of the model on a single input
         if input.shape[1] != 0:
             x = input
             for e in self.encoding_layers:
-                x = e(x)
+                x = self.dropout(e(x), training=training)
             # reduce to state observations
-            encoded_observations = self.state(x)
+            encoded_observations = self.dropout(self.state(x), training=training)
             # now, sum the observations (which have been put on dim 1)
             encoded_state = tf.reduce_sum(encoded_observations, axis=1, keepdims=False)
         else:
@@ -45,6 +45,6 @@ class CandidateNetwork(tf.keras.Model):
         # use that composite state to predict the returns for each possible action
         x = encoded_state
         for d in self.decoding_layers:
-            x = d(x)
+            x = self.dropout(d(x), training=training)
 
         return self.returns(x)

@@ -10,7 +10,9 @@ class ModelStats:
         self.random_winners = 1e-5
         self.model_winner_distance = 0
         self.random_winner_distance = 0
-        self.results = []
+        self.winners = []
+        self.candidates = []
+        self.balance = []
 
     def reset(self):
         self.model_count = 1e-5
@@ -19,10 +21,14 @@ class ModelStats:
         self.random_winners = 1e-5
         self.model_winner_distance = 0
         self.random_winner_distance = 0
-        self.results = []
+        self.winners = []
+        self.candidates = []
+        self.balance = []
 
-    def update(self, winner: Candidate, candidates: List[Candidate]):
-        self.results.append((winner, candidates))
+    def update(self, winner: Candidate, candidates: List[Candidate], balance: float):
+        self.winners.append(winner)
+        self.candidates.append(candidates)
+        self.balance.append(balance)
 
         for c in candidates:
             if c.name[0] == 'r':
@@ -53,7 +59,7 @@ class ModelStats:
         print("%15s %6d, %5d " %
               (label,
                global_step,
-               len(self.results)), end="")
+               len(self.winners)), end="")
 
         print("random %6d/%6d %5.2f%% O: %5.2f" %
               (self.random_count,
@@ -68,5 +74,5 @@ class ModelStats:
                self.model_winner_distance / self.model_winners), end='')
 
         print(" chance of model_winner = %5.2f%%" % (
-                100 * self.model_winners / (self.model_winners + self.random_winners))
-              )
+                100 * self.model_winners / (self.model_winners + self.random_winners)),
+              flush=True)
