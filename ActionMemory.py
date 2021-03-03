@@ -57,8 +57,6 @@ class ActionMemoryDepth:
             self.action = np.concatenate([self.action, action], axis=0)
             self.reward = np.concatenate([self.reward, reward], axis=0)
         else:
-            if self.idx == 0:
-                print("looping action memory depth %d" % self.depth)
             i = self.idx
             self.state[i] = state
             self.action[i] = action

@@ -11,6 +11,7 @@ class NDPopulation(Population):
         super().__init__(Independents)
         self.location = location
         self.scale = scale
+        self.dim = location.shape[0]
 
     def unit_sample_voter(self) -> UnitVoter:
         ideology = np.random.normal(loc=self.location, scale=self.scale)

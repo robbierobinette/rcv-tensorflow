@@ -12,10 +12,6 @@ from Timings import Timings
 from Tensor import Tensor
 import pickle
 
-
-
-
-
 class CandidateModel:
     def __init__(self,
                  ideology_bins: int,
@@ -38,6 +34,8 @@ class CandidateModel:
         self.memory = ActionMemory(1024, ideology_dim, ideology_dim)
         self.action_width = self.ideology_bins * self.ideology_dim
         self.ideology_range = 6
+        self.bin_width = self.ideology_range / self.ideology_bins
+        print("bin_width % .3f" % self.bin_width)
 
         # this is the dimension of the input vector for a single opponent.  It can be the same as ideology_dim, or
         # it could be ideology_dim * ideology_bins for a one_hot representation of ideology
@@ -100,7 +98,7 @@ class CandidateModel:
         self.optimizer.apply_gradients(filtered_grad_vars, self.global_step)
 
     def convert_ideology_to_input(self, ideology: Ideology) -> Tensor:
-        return self.convert_ideology_to_input_onehot(ideology)
+        return self.convert_ideology_to_input_vec(ideology)
 
     def convert_ideology_to_input_vec(self, ideology: Ideology) -> Tensor:
         return ideology.vec.astype(dtype=np.float32)
@@ -151,5 +149,6 @@ class CandidateModel:
         ideology_hot = tf.reshape(ideology_pred, shape=(self.ideology_dim, self.ideology_bins))
         ideology_indices = tf.cast(tf.argmax(ideology_hot, axis=1), tf.dtypes.float32)
         ideology_vec = (ideology_indices / self.ideology_bins - .5) * self.ideology_range
+        ideology_vec = ideology_vec + tf.random.uniform((self.ideology_dim,), 0, self.bin_width)
 
         return ideology_vec.numpy()

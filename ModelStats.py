@@ -10,9 +10,9 @@ class ModelStats:
         self.random_winners = 1e-5
         self.model_winner_distance = 0
         self.random_winner_distance = 0
-        self.winners = []
-        self.candidates = []
-        self.balance = []
+        self.winners: List[Candidate] = []
+        self.candidates: List[List[Candidate]] = []
+        self.balance: List[float] = []
 
     def reset(self):
         self.model_count = 1e-5
@@ -25,21 +25,21 @@ class ModelStats:
         self.candidates = []
         self.balance = []
 
-    def update(self, winner: Candidate, candidates: List[Candidate], balance: float):
+    def update(self, winner: Candidate, candidates: List[Candidate], balance: float = 0):
         self.winners.append(winner)
         self.candidates.append(candidates)
         self.balance.append(balance)
 
         for c in candidates:
-            if c.name[0] == 'r':
-                self.add_random()
-            else:
+            if c.name[0] == 'm':
                 self.add_model()
+            else:
+                self.add_random()
 
-        if winner.name[0] == 'r':
-            self.add_random_winner(winner)
-        else:
+        if winner.name[0] == 'm':
             self.add_model_winner(winner)
+        else:
+            self.add_random_winner(winner)
 
     def add_random(self):
         self.random_count += 1
