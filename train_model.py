@@ -40,7 +40,9 @@ def create_model_and_population(ideology_bins: int, ideology_dim: int) -> (Candi
     population_stddev = np.ones(shape=(ideology_dim,))
     pop = NDPopulation(population_means, population_stddev)
     return model, pop
-#%%
+
+
+# %%
 
 def gen_non_model_candidates(model: CandidateModel, population: NDPopulation) -> List[Candidate]:
     candidates: List[Candidate] = []
@@ -56,6 +58,7 @@ def gen_non_model_candidates(model: CandidateModel, population: NDPopulation) ->
     np.random.shuffle(candidates)
     return candidates
 
+
 def gen_example_candidates(population: NDPopulation, spacing: float) -> List[Candidate]:
     candidates = []
     dim = population.dim
@@ -63,7 +66,7 @@ def gen_example_candidates(population: NDPopulation, spacing: float) -> List[Can
     fuzz = .05
     c1_vec = np.random.normal(0, .01, dim)
     c1_vec[0] += np.random.normal(d, fuzz)
-    candidates.append( Candidate("P-R", Independents, ideology=Ideology(c1_vec), quality=0))
+    candidates.append(Candidate("P-R", Independents, ideology=Ideology(c1_vec), quality=0))
 
     c2_vec = np.random.normal(0, .01, dim)
     c2_vec[0] -= np.random.normal(d, fuzz)
@@ -74,14 +77,14 @@ def gen_example_candidates(population: NDPopulation, spacing: float) -> List[Can
 
     return candidates
 
-def gen_random_candidates(population: NDPopulation, n: int)-> List[Candidate]:
+
+def gen_random_candidates(population: NDPopulation, n: int) -> List[Candidate]:
     candidates = []
     for i in range(3):
         ivec = population.unit_sample_voter().ideology.vec * .5
         candidates.append(Candidate("r-" + str(i), Independents, Ideology(ivec), 0))
 
     return candidates
-
 
 
 def run_sample_election(model: CandidateModel, process: ElectionConstructor, population: NDPopulation, train: bool):
@@ -103,7 +106,7 @@ def run_sample_election(model: CandidateModel, process: ElectionConstructor, pop
 
     voters = population.generate_unit_voters(1000)
     ballots = [Ballot(v, candidates, unit_election_config) for v in voters]
-    #result = process.run(ballots, set(candidates))
+    # result = process.run(ballots, set(candidates))
     election = process.constructor(ballots, set(candidates))
     result = election.result()
     min_distance = min([c.ideology.distance_from_o() for c in candidates])
@@ -113,9 +116,9 @@ def run_sample_election(model: CandidateModel, process: ElectionConstructor, pop
     if delta > .10:
         print("bad winner: %.6f" % delta)
         for c in candidates:
-            print("%s %.3f" % (c.name, c.ideology.distance_from_o()), end = "")
+            print("%s %.3f" % (c.name, c.ideology.distance_from_o()), end="")
             if (c == winner):
-                print(" winner", end = "")
+                print(" winner", end="")
             print("")
         print("")
 
@@ -124,7 +127,8 @@ def run_sample_election(model: CandidateModel, process: ElectionConstructor, pop
     return winner, candidates, balance
 
 
-def train_candidate_model(model: CandidateModel, process: ElectionConstructor, population: NDPopulation, max_steps: int):
+def train_candidate_model(model: CandidateModel, process: ElectionConstructor, population: NDPopulation,
+                          max_steps: int):
     timings = Timings()
     stats = ModelStats()
     first = True
@@ -174,6 +178,7 @@ def run_parameter_set(process: ElectionConstructor, ibins: int, dim: int, steps:
     stats = ModelStats()
     check_stats(stats, model, process, population)
     return ProcessResult(process, ibins, dim, stats)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
