@@ -42,8 +42,6 @@ def create_model_and_population(ideology_bins: int, ideology_dim: int) -> (Candi
     return model, pop
 
 
-# %%
-
 def gen_non_model_candidates(model: CandidateModel, population: NDPopulation) -> List[Candidate]:
     candidates: List[Candidate] = []
     if model.ready():
@@ -52,7 +50,7 @@ def gen_non_model_candidates(model: CandidateModel, population: NDPopulation) ->
         else:
             candidates += gen_random_candidates(population, 3)
     else:
-        candidates += gen_pilot_candidates(population, .6)
+        candidates += gen_pilot_candidates(population, .8)
         candidates += gen_random_candidates(population, 3)
 
     np.random.shuffle(candidates)
@@ -105,22 +103,8 @@ def run_sample_election(model: CandidateModel, process: ElectionConstructor, pop
 
     voters = population.generate_unit_voters(1000)
     ballots = [Ballot(v, candidates, unit_election_config) for v in voters]
-    # result = process.run(ballots, set(candidates))
-    election = process.constructor(ballots, set(candidates))
-    result = election.result()
-    min_distance = min([c.ideology.distance_from_o() for c in candidates])
+    result = process.run(ballots, set(candidates))
     winner = result.winner()
-
-    delta = winner.ideology.distance_from_o() - min_distance
-    if delta > .10:
-        print("bad winner: %.6f" % delta)
-        for c in candidates:
-            print("%s %.3f" % (c.name, c.ideology.distance_from_o()), end="")
-            if (c == winner):
-                print(" winner", end="")
-            print("")
-        print("")
-
     balance = 0
 
     return winner, candidates, balance
