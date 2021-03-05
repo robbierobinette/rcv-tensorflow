@@ -1,6 +1,8 @@
 from ElectionConstructor import ElectionConstructor
 from ModelStats import ModelStats
 import pickle
+from Candidate import Candidate
+from typing import List
 
 class ProcessResult:
     def __init__(self, process: ElectionConstructor, bins: int, dim: int, stats: ModelStats, step: int):
