@@ -48,18 +48,17 @@ def gen_non_model_candidates(model: CandidateModel, population: NDPopulation) ->
     candidates: List[Candidate] = []
     if model.ready():
         if np.random.choice([True, False]):
-            candidates += gen_example_candidates(population, .7)
+            candidates += gen_pilot_candidates(population, .8)
         else:
             candidates += gen_random_candidates(population, 3)
     else:
-        candidates += gen_example_candidates(population, .6)
+        candidates += gen_pilot_candidates(population, .6)
         candidates += gen_random_candidates(population, 3)
 
     np.random.shuffle(candidates)
     return candidates
 
-
-def gen_example_candidates(population: NDPopulation, spacing: float) -> List[Candidate]:
+def gen_pilot_candidates(population: NDPopulation, spacing: float) -> List[Candidate]:
     candidates = []
     dim = population.dim
     d = spacing
@@ -72,7 +71,7 @@ def gen_example_candidates(population: NDPopulation, spacing: float) -> List[Can
     c2_vec[0] -= np.random.normal(d, fuzz)
     candidates.append(Candidate("P-L", Independents, ideology=Ideology(c2_vec), quality=0))
 
-    c3_vec = np.random.normal(0, .01, dim)
+    c3_vec = np.random.normal(0, .02, dim)
     candidates.append(Candidate("P-C", Independents, ideology=Ideology(c3_vec), quality=0))
 
     return candidates
@@ -159,7 +158,7 @@ def check_stats(stats: ModelStats, model: CandidateModel, process: ElectionConst
     results = []
     timings = Timings()
     for i in range(1000):
-        winner, candidates, balance = run_sample_election(model, process, population, train=False)
+        winner, candidates, balance = run_sample_election(model, process, population, train=True)
         stats.update(winner, candidates, balance)
         results.append((winner, candidates))
 
