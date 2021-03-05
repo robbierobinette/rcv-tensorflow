@@ -98,7 +98,7 @@ class CandidateModel:
         self.optimizer.apply_gradients(filtered_grad_vars, self.global_step)
 
     def convert_ideology_to_input(self, ideology: Ideology) -> Tensor:
-        return self.convert_ideology_to_input_vec(ideology)
+        return self.convert_ideology_to_input_onehot(ideology)
 
     def convert_ideology_to_input_vec(self, ideology: Ideology) -> Tensor:
         return ideology.vec.astype(dtype=np.float32)
