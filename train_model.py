@@ -164,27 +164,26 @@ def check_stats(stats: ModelStats, model: CandidateModel, process: ElectionConst
         results.append((winner, candidates))
 
 
-def run_parameter_set(process: ElectionConstructor, ibins: int, dim: int, steps: int) -> ProcessResult:
+def run_parameter_set(process: ElectionConstructor, ibins: int, dim: int, steps: int):
     save_path = "models/cm-%s-%03d-%dD.p" % (process.name, ibins, dim)
     model, population = create_model_and_population(ibins, dim)
     if os.path.exists(save_path):
         with open(save_path, "rb") as f:
             model: CandidateModel = pickle.load(f)
     else:
-        train_candidate_model(model, process, population, steps)
-        # Saving the model file is not working at this time.
-        # model.save_to_file(save_path)
-
-    stats = ModelStats()
-    check_stats(stats, model, process, population)
-    return ProcessResult(process, ibins, dim, stats)
+        while model.global_step < steps:
+            train_candidate_model(model, process, population, model.global_step + 2000)
+            stats = ModelStats()
+            check_stats(stats, model, process, population)
+            result = ProcessResult(process, ibins, dim, stats, model.global_step)
+            result.save(args.output)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dim", help="dimensionality", type=int, default=1)
     parser.add_argument("--bins", help="ideology bins", type=int, default=64)
-    parser.add_argument("--steps", help="learning steps", type=int, default=5000)
+    parser.add_argument("--steps", help="learning steps", type=int, default=6000)
     parser.add_argument("--process", help="election proces: Hare or Minimax", type=str, default="Minimax")
     parser.add_argument("--output", help="Location for output", type=str)
     args = parser.parse_args()
@@ -198,5 +197,4 @@ if __name__ == "__main__":
     else:
         process = ElectionConstructor(construct_h2h, "Minimax")
 
-    result = run_parameter_set(process, args.bins, args.dim, args.steps)
-    result.save(args.output)
+    run_parameter_set(process, args.bins, args.dim, args.steps)
