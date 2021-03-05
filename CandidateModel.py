@@ -33,7 +33,7 @@ class CandidateModel:
         self.global_step = 0
         self.memory = ActionMemory(1024, ideology_dim, ideology_dim)
         self.action_width = self.ideology_bins * self.ideology_dim
-        self.ideology_range = 6
+        self.ideology_range = 3
         self.bin_width = self.ideology_range / self.ideology_bins
         print("bin_width % .3f" % self.bin_width)
 
