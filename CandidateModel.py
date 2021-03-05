@@ -150,6 +150,6 @@ class CandidateModel:
         ideology_indices = tf.cast(tf.argmax(ideology_hot, axis=1), tf.dtypes.float32)
         ideology_vec = (ideology_indices / self.ideology_bins - .5) * self.ideology_range
         # ideology_vec = ideology_vec + tf.random.uniform((self.ideology_dim,), 0, self.bin_width)
-        # ideology_vec = ideology_vec + tf.random.normal((self.ideology_dim,), 0, self.bin_width / 2)
+        ideology_vec = ideology_vec + tf.random.normal((self.ideology_dim,), 0, self.bin_width / 2)
 
         return ideology_vec.numpy()

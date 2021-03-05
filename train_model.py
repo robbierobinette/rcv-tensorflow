@@ -46,11 +46,11 @@ def gen_non_model_candidates(model: CandidateModel, population: NDPopulation) ->
     candidates: List[Candidate] = []
     if model.ready():
         if np.random.choice([True, False]):
-            candidates += gen_pilot_candidates(population, .8)
+            candidates += gen_pilot_candidates(population, .7)
         else:
             candidates += gen_random_candidates(population, 3)
     else:
-        candidates += gen_pilot_candidates(population, .8)
+        candidates += gen_pilot_candidates(population, .7)
         candidates += gen_random_candidates(population, 3)
 
     np.random.shuffle(candidates)
@@ -60,7 +60,7 @@ def gen_pilot_candidates(population: NDPopulation, spacing: float) -> List[Candi
     candidates = []
     dim = population.dim
     d = spacing
-    fuzz = .05
+    fuzz = .03
     c1_vec = np.random.normal(0, .01, dim)
     c1_vec[0] += np.random.normal(d, fuzz)
     candidates.append(Candidate("P-R", Independents, ideology=Ideology(c1_vec), quality=0))

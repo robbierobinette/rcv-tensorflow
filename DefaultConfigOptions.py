@@ -10,7 +10,7 @@ unit_election_config = ElectionConfig(
     party_loyalty=0,
     independent_bonus=0,
     wasted_vote_factor=0,
-    uncertainty=.00
+    uncertainty=.375
 )
 
 dw_nominate_election_config = ElectionConfig(
