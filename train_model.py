@@ -46,11 +46,11 @@ def gen_non_model_candidates(model: CandidateModel, population: NDPopulation) ->
     candidates: List[Candidate] = []
     if model.ready():
         if np.random.choice([True, False]):
-            candidates += gen_example_candidates(population, .7)
+            candidates += gen_example_candidates(population, .5)
         else:
             candidates += gen_random_candidates(population, 3)
     else:
-        candidates += gen_example_candidates(population, .6)
+        candidates += gen_example_candidates(population, .5)
         candidates += gen_random_candidates(population, 3)
 
     np.random.shuffle(candidates)
