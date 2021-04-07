@@ -39,7 +39,7 @@ class ModelStats:
         if winner.name[0] == 'm':
             self.add_model_winner(winner)
         else:
-            self.add_random_winner(winner)
+           self.add_random_winner(winner)
 
     def add_random(self):
         self.random_count += 1

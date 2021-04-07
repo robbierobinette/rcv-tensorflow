@@ -20,12 +20,12 @@ class ActionMemory:
         return list(self.depth_memory.keys())
 
     def ready(self) -> bool:
-        return self.size > 500
+        return self.size > 1000
 
     def add_sample(self, state: np.ndarray, action: np.ndarray, reward: np.ndarray):
         self.size += 1
         sample_depth = state.shape[1]
-        if not sample_depth in self.depth_memory:
+        if sample_depth not in self.depth_memory:
             self.depth_memory[sample_depth] = ActionMemoryDepth(sample_depth, self.max_size, self.state_width,
                                                                 self.action_width)
 
@@ -49,7 +49,7 @@ class ActionMemoryDepth:
         assert (self.depth == state.shape[1], "depth must match")
         if self.state.shape[0] == 0:
             self.state = np.zeros(shape=(0, state.shape[1], state.shape[2]), dtype=np.single)
-            self.action = np.zeros(shape=(0, action.shape[1]), dtype=np.int32)
+            self.action = np.zeros(shape=(0, action.shape[1]), dtype=np.single)
             self.reward = np.zeros(shape=(0, 1), dtype=np.single)
 
         if self.state.shape[0] < self.max_size:

@@ -15,6 +15,9 @@ class PluralityElection(Election):
     def __init__(self, ballots: BallotIter, active_candidates: Set[Candidate]):
         super().__init__(ballots, active_candidates)
         self.vote_totals = {}
+        for c in active_candidates:
+            self.vote_totals[c] = 0
+
         self.active_candidates = active_candidates
         self.ordered_candidates: List[Candidate] = self.compute_results()
 
@@ -25,8 +28,6 @@ class PluralityElection(Election):
     def compute_results(self) -> List[Candidate]:
         for b in self.ballots:
             w = b.active_choice(self.active_candidates)
-            if w not in self.vote_totals:
-                self.vote_totals[w] = 0
             self.vote_totals[w] += 1
 
         c_list = list(self.vote_totals.items())
