@@ -1,33 +1,29 @@
-import tensorflow as tf
-import numpy as np
-import matplotlib as plt
-from Tensor import Tensor
-from ActionMemory import ActionMemory
-
+import datetime as datetime
 import os.path
 import pickle
 
+import tensorflow as tf
+
+from ActionMemory import ActionMemory
 from Ballot import Ballot
 from DefaultConfigOptions import *
 from ElectionConstructor import ElectionConstructor, construct_irv, construct_h2h
 from ModelStats import ModelStats
 from NDPopulation import NDPopulation
 from ProcessResult import ProcessResult
+from Tensor import Tensor
 from Timings import Timings
-from PluralityElection import PluralityElection
-import datetime as datetime
-import tensorflow.keras.optimizers as opt
 
 # Parameters for Ornstein–Uhlenbeck process
 THETA = 0.15
 DT = 1e-1
 
 
-class ElectionStatePreprocessor(tf.keras.Model)
+class ElectionStateEncoder(tf.keras.Model):
     def get_config(self):
         pass
 
-    def __init__(self, ideology_dim: int, n_latent: int, width: int, learn_rate: float):
+    def __init__(self, ideology_dim: int, n_latent: int, width: int):
         super().__init__()
         self.ideology_dim = ideology_dim
         self.n_latent = n_latent
@@ -63,17 +59,9 @@ class CandidateActor(tf.keras.Model):
     def get_config(self):
         pass
 
-    def __init__(self, ideology_dim: int, n_latent: int, width: int, learn_rate: float):
+    def __init__(self, ideology_dim: int, width: int, learn_rate: float):
         super().__init__()
         self.ideology_dim = ideology_dim
-        self.n_latent = n_latent
-
-        self.encoding_layers = []
-        self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu', name="actor-enc1"))
-        self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu', name="actor-enc2"))
-        self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu', name="actor-enc3"))
-
-        self.state = tf.keras.layers.Dense(self.n_latent)
 
         self.decoding_layers = []
         self.decoding_layers.append(tf.keras.layers.Dense(width, activation='relu', name="actor-dec1"))
@@ -85,22 +73,7 @@ class CandidateActor(tf.keras.Model):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=learn_rate)
 
     # input is a tensor of shape (batch_size, n_observations (n_candidates), input_dim)
-    def call(self, state: Tensor, training: bool = None, mask: bool = None) -> Tensor:
-        # runs the encoder portion of the model on a single input
-        if state.shape[1] != 0:
-            x = state
-            for e in self.encoding_layers:
-                x = self.dropout(e(x), training=training)
-            # reduce to state observations
-            encoded_observations = self.dropout(self.state(x), training=training)
-            # now, sum the observations (which have been put on dim 1)
-            encoded_state = tf.reduce_sum(encoded_observations, axis=1, keepdims=False)
-        else:
-            # this corresponds to no candidates in the race yet.
-            batch_size = state.shape[0]
-            encoded_state = tf.zeros(shape=(batch_size, self.n_latent), dtype=tf.dtypes.float32)
-
-        # use that composite state to predict the returns for each possible action
+    def call(self, encoded_state: Tensor, training: bool = None, mask: bool = None) -> Tensor:
         x = encoded_state
         for d in self.decoding_layers:
             x = self.dropout(d(x), training=training)
@@ -115,12 +88,6 @@ class CandidateCritic(tf.keras.Model):
         self.ideology_dim = ideology_dim
         self.n_latent = n_latent
 
-        self.encoding_layers = []
-        self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu', name="critc-enc1"))
-        self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu', name="critc-enc2"))
-        self.encoding_layers.append(tf.keras.layers.Dense(width, activation='relu', name="critc-enc3"))
-
-        self.state = tf.keras.layers.Dense(self.n_latent, name="critic_encoded_observations")
 
         self.decoding_layers = []
         self.decoding_layers.append(tf.keras.layers.Dense(width, activation='relu', name="critic-dec1"))
@@ -132,20 +99,7 @@ class CandidateCritic(tf.keras.Model):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=learn_rate)
 
     # input is a tensor of shape (batch_size, n_observations (n_candidates), input_dim)
-    def call(self, state: Tensor, action: Tensor, training: bool = None, mask: bool = None) -> Tensor:
-        if state.shape[1] != 0:
-            x = state
-            for e in self.encoding_layers:
-                x = self.dropout(e(x), training=training)
-            # reduce to state observations
-            encoded_observations = self.dropout(self.state(x), training=training)
-            # now, sum the observations (which have been put on dim 1)
-            encoded_state = tf.reduce_sum(encoded_observations, axis=1, keepdims=False)
-        else:
-            # this corresponds to no candidates in the race yet.
-            batch_size = state.shape[0]
-            encoded_state = tf.zeros(shape=(batch_size, self.n_latent), dtype=tf.dtypes.float32)
-
+    def call(self, encoded_state: Tensor, action: Tensor, training: bool = None, mask: bool = None) -> Tensor:
         # use the composite state and action to predict the returns for the given action
         x = tf.concat([encoded_state, action], axis=1)
         for d in self.decoding_layers:
@@ -162,7 +116,8 @@ class CandidateAgent:
         self.gamma = .99
         self.tau = .01
 
-        self.actor = CandidateActor(ideology_dim, n_latent, width, actor_lr)
+        self.encoder = ElectionStateEncoder(ideology_dim, n_latent, width)
+        self.actor = CandidateActor(ideology_dim, width, actor_lr)
         self.critic = CandidateCritic(ideology_dim, n_latent, width, critic_lr)
         self.memory = ActionMemory(1024, ideology_dim, ideology_dim)
 
@@ -180,9 +135,10 @@ class CandidateAgent:
             self.update(state, action, reward)
         self.global_step += 1
 
-    def update(self, state, action, reward):
+    def update(self, raw_state, action, reward):
         with tf.GradientTape() as tape:
-            critic_value = self.critic.call(state, action)
+            encoded_state = self.encoder(raw_state)
+            critic_value = self.critic.call(encoded_state, action)
             # print("critic_reward")
             # for i in range(reward.shape[0]):
             #     print(f"\ta: {action.numpy()[i, 0]: 8.2f} ", end="")
@@ -194,19 +150,26 @@ class CandidateAgent:
         # print(f"critic_loss: {critic_loss.numpy().shape} {critic_loss.numpy(): .2f}")
 
         with self.summary_writer.as_default():
-            label = f"critic_loss-{state.shape[1]}"
+            label = f"critic_loss-{raw_state.shape[1]}"
             tf.summary.scalar(label, critic_loss, step=self.global_step)
             tf.summary.flush()
 
-        critic_gradient = tape.gradient(critic_loss, self.critic.trainable_variables)
-        gv = [(g, v) for g, v in zip(critic_gradient, self.critic.trainable_variables) if g is not None]
+        # This updates both the encoder and the critic.  Update the encoder here because
+        # the critic error is known.
+        vars = self.critic.trainable_variables + self.encoder.trainable_variables
+        critic_gradient = tape.gradient(critic_loss, vars)
+        gv = [(g, v) for g, v in zip(critic_gradient, vars) if g is not None]
         self.critic.optimizer.apply_gradients(gv)
 
         with tf.GradientTape() as tape:
-            policy_actions = self.actor(state)
-            actor_loss = -self.critic(state, policy_actions)
+            encoded_state = self.encoder(raw_state)
+            policy_actions = self.actor(encoded_state)
+            actor_loss = -self.critic(encoded_state, policy_actions)
             actor_loss = tf.math.reduce_mean(actor_loss)
 
+        # Here we are only training the actor's decoding layer, we are not altering the encoding.
+        # We cannot update anything about the critic here because that would alter the critics opinion
+        # of the action and not the quality of the action.
         actor_gradient = tape.gradient(actor_loss, self.actor.trainable_variables)
         gv = [(g, v) for g, v in zip(actor_gradient, self.actor.trainable_variables) if g is not None]
         self.actor.optimizer.apply_gradients(gv)
@@ -218,8 +181,10 @@ class CandidateAgent:
         return x + theta * (mu - x) * dt + std * np.sqrt(dt) * np.random.normal(size=self.ideology_dim)
 
     def get_action(self, observation, noise, evaluation=False):
-        state = tf.convert_to_tensor([observation], dtype=tf.float32)
-        actions = self.actor(state)
+        raw_state = tf.convert_to_tensor([observation], dtype=tf.float32)
+        encoded_state = self.encoder(raw_state)
+
+        actions = self.actor(encoded_state)
         if not evaluation:
             self.noise = self._ornstein_uhlenbeck_process(noise)
             actions += self.noise
@@ -236,8 +201,9 @@ class CandidateAgent:
         return ideology.vec.astype(dtype=np.float32)
 
     def choose_ideology(self, opponents: List[Candidate]):
-        state = self.get_state_from_opponents(opponents)
-        ideology_pred = self.actor.call(state, training=True)
+        raw_state = self.get_state_from_opponents(opponents)
+        encoded_state = self.encoder(raw_state)
+        ideology_pred = self.actor.call(encoded_state, training=True)
         ideology_pred = tf.reshape(ideology_pred, shape=(self.ideology_dim,))
         return ideology_pred.numpy()
 
@@ -267,6 +233,7 @@ class CandidateAgent:
     def save_to_file(self, path: str):
         self.actor.save(path + ".actor")
         self.critic.save(path + ".critic")
+        self.encoder.save(path + ".encoder")
         with open(path, "wb") as f:
             pickle.dump(self, f)
 
@@ -275,11 +242,11 @@ class CandidateAgent:
         # Don't pickle the model
         del state["actor"]
         del state["critic"]
+        del state["encoder"]
         del state["memory"]
         del state["optimizer"]
         del state["summary_writer"]
         return state
-
 
 def create_model_and_population(ideology_dim: int) -> (CandidateAgent, NDPopulation):
     hidden_ratio = 64
